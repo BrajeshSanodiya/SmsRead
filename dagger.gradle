@@ -1,0 +1,10 @@
+apply plugin: 'kotlin-kapt'
+
+dependencies {
+    implementation Deps.dagger
+    implementation Deps.daggerAndroid
+    implementation Deps.daggerAndSupport
+
+    kapt Deps.daggerCompiler
+    kapt Deps.daggerAndProccessor
+}

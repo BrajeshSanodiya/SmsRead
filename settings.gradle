@@ -1,0 +1,4 @@
+rootProject.name = "SmsRead Demo"
+
+include ':app'
+include ':libraries:appcoredatabase'

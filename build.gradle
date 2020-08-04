@@ -1,0 +1,112 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {scriptHandler ->
+    apply from: 'repositories.gradle',
+            to: scriptHandler
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath Deps.toolsGradleAndroid
+        classpath Deps.toolsKotlin
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
+    }
+}
+apply plugin: "org.jlleitschuh.gradle.ktlint"
+
+subprojects{
+    apply plugin: "org.jlleitschuh.gradle.ktlint" // Version should be inherited from parent
+
+    buildscript {
+        apply from: rootProject.file('repositories.gradle')
+    }
+    if (project.hasProperty("kapt")) {
+        kapt {
+            useBuildCache = true
+        }
+    }
+
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+
+            android {
+                buildToolsVersion Config.buildTools
+                compileSdkVersion Config.compileSdk
+                ndkVersion "21.3.6528147"
+
+                defaultConfig {
+                    minSdkVersion Config.minSdk
+                    targetSdkVersion Config.targetSdk
+                    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+                }
+
+                compileOptions {
+                    sourceCompatibility Config.javaVersion
+                    targetCompatibility Config.javaVersion
+                }
+
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
+
+                if (project.name != "app") {
+                    flavorDimensions "brand"
+                }
+
+                def envConfig
+                productFlavors {
+                    smsapp {
+                        dimension "brand"
+                        envConfig = getProps("config/smsapp.properties")
+                        envConfig.each { p ->
+                            if (p.key != 'VERSION_CODE' && p.key != 'VERSION_NAME' && p.key != 'APP_ID') {
+                                if (p.value == "true" || p.value == "false") {
+                                    buildConfigField 'boolean', p.key, p.value
+                                } else {
+                                    buildConfigField 'String', p.key, p.value
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            dependencies {
+                //region Adds Kotlin std lib and coroutines to all modules as kotlin is primary language in the project
+                implementation Deps.kotlinStdLib
+                implementation Deps.kotlinxCoroutinesCore
+                implementation Deps.kotlinxCoroutinesAndroid
+                //endregion
+            }
+        }
+    }
+
+
+    ktlint {
+        android = true
+        ignoreFailures = true
+        enableExperimentalRules = true
+    }
+}
+/*allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}*/
+
+repositories {
+    google()
+}
+
+def getProps(path) {
+    Properties props = new Properties()
+    props.load(new FileInputStream(file(path)))
+    return props
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

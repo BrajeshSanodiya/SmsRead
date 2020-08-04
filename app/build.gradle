@@ -1,0 +1,81 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+apply from: '../dagger.gradle'
+android {
+    compileSdkVersion Config.compileSdk
+    buildToolsVersion Config.buildTools
+
+    defaultConfig {
+        applicationId "com.brajesh.smsread"
+        minSdkVersion Config.minSdk
+        targetSdkVersion Config.targetSdk
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
+
+    def envConfig
+
+    flavorDimensions "brand", "mode"
+
+    productFlavors {
+        smsapp {
+            dimension "brand"
+            envConfig = getProps("config/smsapp.properties")
+            applicationId envConfig.getProperty("APP_ID").replace("\"", "")
+            versionCode envConfig.VERSION_CODE.replace("\"", "").toInteger()
+            versionName envConfig.VERSION_NAME.replace("\"", "")
+        }
+
+        regular {
+            dimension "mode"
+        }
+
+        qa {
+            dimension "mode"
+            def date = new Date().format('yyyy_MM_dd_HHmm')
+            def gitCommitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
+            versionNameSuffix "-qa-${date}-${gitCommitHash}"
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+
+    implementation project(':libraries:appcoredatabase')
+
+    implementation Deps.kotlinStdLib
+    implementation Deps.androidxCoreKtx
+    implementation Deps.androidxAppcompat
+    implementation Deps.androidxConstraintLayout
+    implementation Deps.kotlinxCoroutinesCore
+
+    implementation Deps.androidxLocalBroadcastManager
+    implementation Deps.androidxLifecycleViewmodelKtx
+    implementation Deps.androidxRecyclerview
+
+    implementation Deps.androidxActivityKtx
+}
